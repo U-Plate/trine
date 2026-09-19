@@ -1202,14 +1202,8 @@ function generateReport(date: string, hallResults: HallResult[], warnings: Warni
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  });
-  const parts = formatter.formatToParts(new Date());
-  const date = `${parts.find((p) => p.type === "year")!.value}-${parts.find((p) => p.type === "month")!.value}-${parts.find((p) => p.type === "day")!.value}`;
+  // TEMP: override to a mid-school-year date (spring semester) for richer data
+  const date = "2026-02-10";
 
   console.log(`\nD1 Storage Test Harness — ${school.getSchoolCode()}`);
   console.log(`Date: ${date}\n`);
@@ -1276,11 +1270,13 @@ async function main() {
   }
 
   // ── Phase 2: processMenus — the exact call production's cron makes ──
-  console.log(`\nRunning processMenus(env, 0, false) — the production ingest path...`);
+  // TEMP: dateOffset targets 2026-02-10 from today (2026-07-13)
+  const dateOffset = Math.floor((new Date("2026-02-10T12:00:00Z").getTime() - Date.now()) / 86400e3);
+  console.log(`\nRunning processMenus(env, ${dateOffset}, false) — the production ingest path...`);
   let processOk = false;
   if (hasProcessMenus) {
     try {
-      const responses = await (school as any).processMenus(mockEnv, 0, false);
+      const responses = await (school as any).processMenus(mockEnv, dateOffset, false);
       processOk = true;
       check("processMenus() completes without throwing", true, `${db.meals.length} meal rows written`);
       const shapeOk =
@@ -1304,7 +1300,7 @@ async function main() {
     trackInserts = run2Changes;
     trackFoodInserts = run2FoodInserts;
     try {
-      await (school as any).processMenus(mockEnv, 0, false);
+      await (school as any).processMenus(mockEnv, dateOffset, false);
       check(
         "Second processMenus run skips unchanged slots (no version churn)",
         run2Changes.length === 0,

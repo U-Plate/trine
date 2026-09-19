@@ -82,7 +82,9 @@ class Nutrislice extends School {
         meals: meals[mealKey] ?? [],
         school: this.schoolCodeValue,
         mealTime: mealKey,
-        mealTimeHours: mealTimeHours[mt] ?? "{}",
+        // HallData keys match the capitalized meal keys. Keep the lowercase
+        // lookup as a compatibility fallback for older school parsers.
+        mealTimeHours: mealTimeHours[mealKey] ?? mealTimeHours[mt] ?? "{}",
       });
     });
     const updated = await Promise.all(futures);
